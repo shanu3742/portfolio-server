@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cards</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .card h3 {
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      margin: 4px 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .input-wraaper{
+             padding: 12px 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin: 4px;
+        }
+
+        .input-wraaper:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+button{
+            padding-left:6px;
+            padding-right:6px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            border: 1px;
+            border-style: solid;
+            border-color: gray;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .active-btn{
+  background-color: #2563eb;      /* Primary Blue */
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+        
+  </style>
+</head>
+<body>
+  <input placeholder="Enter secret key" id="secretkey" class="input-wraaper" />
+  <button class="active-btn" onclick="getFeedback()" >Get Feedback</button>
+  <div class="card-container" id="cardContainer"></div>
+
+  <script>
+    const container = document.getElementById('cardContainer');
+    const viewFeedback = (feedbackList) => {
+        feedbackList.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      card.innerHTML = `
+        <h3>${item.name}</h3>
+        <p><strong>Phone:</strong> ${item.number}</p>
+        <p><strong>Email:</strong> ${item.email}</p>
+        <p><strong>Message:</strong> ${item.message}</p>
+      `;
+
+      container.appendChild(card);
+    });
+
+    }
+    const getFeedback = async () => {
+  try {
+    const secretKey = document.getElementById('secretkey').value;
+
+    const res = await fetch('/portfolio/api/v1/feedback', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${secretKey}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch feedback');
+    }
+
+    const data = await res.json();
+    viewFeedback(data.feedback);
+
+  } catch (err) {
+    console.error('Error fetching feedback', err);
+  }
+};
+
+   
+  </script>
+
+</body>
+</html>

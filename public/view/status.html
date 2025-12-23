@@ -1,0 +1,125 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+        button{
+            padding-left:6px;
+            padding-right:6px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            border: 1px;
+            border-style: solid;
+            border-color: gray;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .active{
+            background-color: rgb(216, 255, 216);
+            color: green;
+            border-color: green;
+           
+        }
+        .in-active{
+            background-color: rgb(250, 177, 177);
+            color: red;
+            border-color: red;
+        }
+        .input-wraaper{
+             padding: 12px 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin: 4px;
+        }
+
+        .input-wraaper:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.active-btn{
+  background-color: #2563eb;      /* Primary Blue */
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+    </style>
+</head>
+<body>
+    <h3>Change Status:</h3>
+    <input placeholder="Enter secret key" id="secretkey" class="input-wraaper" />
+    <div onclick="handleActivity(event)">
+            <button class="active" >Active</button>
+            <button class="in-active">In-active</button>
+            <button>do not distrub</button>
+    </div>
+
+    <script>
+        const buttonsContainer = document.querySelector('div');
+        const buttons = buttonsContainer.querySelectorAll('button');
+      
+       
+        function setActiveButton(status) {
+          buttons.forEach(btn => {
+            btn.classList.remove('active-btn');
+      
+            if (btn.innerText.toLowerCase() === status.toLowerCase()) {
+              btn.classList.add('active-btn');
+            }
+          });
+        }
+      
+       
+        const handleActivity = async (event) => {
+          if (event.target.tagName !== 'BUTTON') return;
+      
+          const selectedStatus = event.target.innerText;
+          const secretKey = document.getElementById('secretkey').value;
+      
+          try {
+            const res = await fetch('/portfolio/api/v1/status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ secretKey, status: selectedStatus })
+            });
+            setActiveButton(selectedStatus);
+          } catch (err) {
+            console.error('Error sending status', err);
+          }
+        };
+      
+        buttonsContainer.addEventListener('click', handleActivity);
+      
+        const getActivity = async () => {
+          try {
+            const res = await fetch('/portfolio/api/v1/status');
+            const data = await res.json();
+            setActiveButton(data.status);
+          } catch (err) {
+            console.error('Error fetching status', err);
+          }
+        };
+      
+       
+        document.addEventListener('DOMContentLoaded', getActivity);
+      </script>
+      
+</body>
+</html>
