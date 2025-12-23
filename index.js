@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const { FEEDBACK } = require("./modal/feedback.modal");
 require("dotenv").config();
-app.use(cors());
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -16,6 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 let currentStatus = "In-active";
 
