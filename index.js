@@ -1,34 +1,36 @@
-const express = require('express');
-const path = require('path')
-const  bcrypt  = require("bcryptjs");
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
-const nodemailer = require('nodemailer');
-const { FEEDBACK } = require('./modal/feedback.modal');
-require('dotenv').config()
+const nodemailer = require("nodemailer");
+const { FEEDBACK } = require("./modal/feedback.modal");
+require("dotenv").config();
+app.use(cors());
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,     // your email
-      pass: process.env.EMAIL_PASS      // app password
-    }
-  });
-
-
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER, // your email
+    pass: process.env.EMAIL_PASS, // app password
+  },
+});
 
 const app = express();
 app.use(express.json());
-let currentStatus= "In-active"
+let currentStatus = "In-active";
 
-
-app.use('/portfolio/api/v1/view',express.static(path.join(__dirname,'public', 'view')))
+app.use(
+  "/portfolio/api/v1/view",
+  express.static(path.join(__dirname, "public", "view"))
+);
 
 async function sendEmail({ name, email, number, message }) {
-    try {
-      const info = await transporter.sendMail({
-        from: `"Portfolio Feedback" <${process.env.EMAIL_USER}>`,
-        to: 'kumarshanu.dev@gmail.com',
-        subject: 'New Feedback Received',
-        html: `
+  try {
+    const info = await transporter.sendMail({
+      from: `"Portfolio Feedback" <${process.env.EMAIL_USER}>`,
+      to: "kumarshanu.dev@gmail.com",
+      subject: "New Feedback Received",
+      html: `
           <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
             <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden;">
               
@@ -65,119 +67,118 @@ async function sendEmail({ name, email, number, message }) {
   
             </div>
           </div>
-        `
-      });
-  
-      console.log('Email sent:', info.messageId);
-    } catch (err) {
-      console.error('Email error:', err);
-    }
+        `,
+    });
+
+    console.log("Email sent:", info.messageId);
+  } catch (err) {
+    console.error("Email error:", err);
   }
-  
-
-
-const isValidUser  = async (req,res,next) => {
-    try{
-        const authHeader = req.headers?.authorization;
-        const token = authHeader?.split(' ')[1];
-        const  secretKey  = req?.body?.secretKey??token; 
-        const isVerifiedUser  = await bcrypt.compare(secretKey, process.env.SECRET_KEY);
-        if(isVerifiedUser){
-            next()
-        }
-        else{
-            res.status(401).json({
-                success: false,
-                status:'invalid credentials'
-              });
-          
-        }
-    }catch(e){
-        res.status(401).json({
-            success: false,
-            status:'server error'
-          });
-    }
 }
 
+const isValidUser = async (req, res, next) => {
+  try {
+    const authHeader = req.headers?.authorization;
+    const token = authHeader?.split(" ")[1];
+    const secretKey = req?.body?.secretKey ?? token;
+    const isVerifiedUser = await bcrypt.compare(
+      secretKey,
+      process.env.SECRET_KEY
+    );
+    if (isVerifiedUser) {
+      next();
+    } else {
+      res.status(401).json({
+        success: false,
+        status: "invalid credentials",
+      });
+    }
+  } catch (e) {
+    res.status(401).json({
+      success: false,
+      status: "server error",
+    });
+  }
+};
 
 //all routes
 
-app.post('/portfolio/api/v1/status',isValidUser, (req, res) => {
-    const { status } = req.body;
-    currentStatus= status;
-  
-    console.log('User status:', status);
-  
-    // TODO: save to DB / mark active / send email etc.
-  
+app.post("/portfolio/api/v1/status", isValidUser, (req, res) => {
+  const { status } = req.body;
+  currentStatus = status;
+
+  console.log("User status:", status);
+
+  // TODO: save to DB / mark active / send email etc.
+
+  res.status(200).json({
+    success: true,
+    status,
+  });
+});
+app.listen(3000, () => {
+  console.log("listen to server");
+});
+
+app.get("/portfolio/api/v1/status", async (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: currentStatus,
+  });
+});
+
+app.get("/portfolio/api/v1/feedback", isValidUser, async (req, res) => {
+  try {
+    const latestFeedbackList = await FEEDBACK.find({}).limit(20).skip(0);
     res.status(200).json({
       success: true,
-      status
+      feedback: latestFeedbackList,
     });
-  });
-app.listen(3000,() => {
-    console.log('listen to server')
-})
-
-
-
-app.get('/portfolio/api/v1/status', async (req, res) => {
-    res.status(200).json({
-      success: true,
-      status:currentStatus
-    });
-  });
-
-
-  app.get('/portfolio/api/v1/feedback',isValidUser,async (req,res) => {
-     try{
-        const latestFeedbackList = await FEEDBACK.find({}).limit(20).skip(0)
-        res.status(200).json({
-          success: true,
-          feedback:latestFeedbackList
-        });
-     }catch(e){
-        res.status(401).json({
-            success: false,
-            status:'server error'
-          });
-     }
-})
- app.post('/portfolio/api/v1/feedback',async(req,res) => {
-    //saved data in db
-
-    //send data to mail
-  try{
-    const {name,number,email,message} = req.body;
-    if(!name || !number || !email || !message){
-        return  res.status(404).json({
-            success: false,
-            message:'fill all field'
-          });
-    }
-
-    const savedFeedback = await  FEEDBACK.create({name,number,email,message});
-    if(!savedFeedback){
-        return  res.status(404).json({
-            success: false,
-            message:'something went wormg'
-          });
-    }
-    sendEmail(savedFeedback)
-    res.status(201).send({
-        message:'feedback submited'
-    })
-  }catch(e){
+  } catch (e) {
     res.status(401).json({
+      success: false,
+      status: "server error",
+    });
+  }
+});
+app.post("/portfolio/api/v1/feedback", async (req, res) => {
+  //saved data in db
+
+  //send data to mail
+  try {
+    const { name, number, email, message } = req.body;
+    if (!name || !number || !email || !message) {
+      return res.status(404).json({
         success: false,
-        status:'server error'
+        message: "fill all field",
       });
-}
- })
+    }
 
-// send feedack  from 
+    const savedFeedback = await FEEDBACK.create({
+      name,
+      number,
+      email,
+      message,
+    });
+    if (!savedFeedback) {
+      return res.status(404).json({
+        success: false,
+        message: "something went wormg",
+      });
+    }
+    sendEmail(savedFeedback);
+    res.status(201).send({
+      message: "feedback submited",
+    });
+  } catch (e) {
+    res.status(401).json({
+      success: false,
+      status: "server error",
+    });
+  }
+});
 
+// send feedack  from
 
 //db connenction
 
@@ -191,8 +192,6 @@ db.once("open", () => {
   console.log(`Connect To Database`);
 });
 
-app.listen(3000,() => {
-    console.log('listen to server')
-})
-
-
+app.listen(3000, () => {
+  console.log("listen to server");
+});
