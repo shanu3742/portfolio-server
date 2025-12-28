@@ -5,14 +5,17 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const { FEEDBACK } = require("./modal/feedback.modal");
+const { console } = require("inspector");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
   auth: {
     user: process.env.EMAIL_USER, // your email
     pass: process.env.EMAIL_PASS, // app password
   },
+  secure: true,
 });
 
 const app = express();
@@ -122,6 +125,7 @@ app.listen(3000, () => {
 });
 
 app.get("/portfolio/api/v1/status", async (req, res) => {
+  console.log("shanu env", process.env.EMAIL_PASS);
   res.status(200).json({
     success: true,
     status: currentStatus,
