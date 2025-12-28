@@ -15,13 +15,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP VERIFY ERROR:", error);
-  } else {
-    console.log("SMTP server is ready to send mails");
-  }
-});
+
 const app = express();
 app.use(cors());
 app.use(express.json());
