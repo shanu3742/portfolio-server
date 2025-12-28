@@ -128,7 +128,10 @@ app.get("/portfolio/api/v1/status", async (req, res) => {
 
 app.get("/portfolio/api/v1/feedback", isValidUser, async (req, res) => {
   try {
-    const latestFeedbackList = await FEEDBACK.find({}).limit(20).skip(0);
+    const latestFeedbackList = await FEEDBACK.find({})
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .skip(0);
     res.status(200).json({
       success: true,
       feedback: latestFeedbackList,
