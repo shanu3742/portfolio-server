@@ -5,19 +5,23 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const { FEEDBACK } = require("./modal/feedback.modal");
-const { console } = require("inspector");
+
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port:587,
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // your email
-    pass: process.env.EMAIL_PASS, // app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
-  secure:false,
 });
-
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP VERIFY ERROR:", error);
+  } else {
+    console.log("SMTP server is ready to send mails");
+  }
+});
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -120,12 +124,8 @@ app.post("/portfolio/api/v1/status", isValidUser, (req, res) => {
     status,
   });
 });
-app.listen(3000, () => {
-  console.log("listen to server");
-});
 
 app.get("/portfolio/api/v1/status", async (req, res) => {
-  console.log("shanu env", process.env.EMAIL_PASS);
   res.status(200).json({
     success: true,
     status: currentStatus,
@@ -171,7 +171,7 @@ app.post("/portfolio/api/v1/feedback", async (req, res) => {
         message: "something went wormg",
       });
     }
-    sendEmail(savedFeedback);
+    await sendEmail(savedFeedback);
     res.status(201).send({
       message: "feedback submited",
     });
