@@ -168,7 +168,7 @@ app.post("/portfolio/api/v1/feedback", async (req, res) => {
         message: "something went wormg",
       });
     }
-    await sendEmail(savedFeedback);
+    sendEmail(savedFeedback);
     res.status(201).send({
       message: "feedback submited",
     });
