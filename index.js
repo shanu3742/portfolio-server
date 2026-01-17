@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const { Resend } = require("resend");
 const { FEEDBACK } = require("./modal/feedback.modal");
+const { PORTFOLIO_STATUS } = require("./modal/portfolio.status.modal");
 
 require("dotenv").config();
 
@@ -13,7 +14,6 @@ const resend = new Resend(process.env.EMAIL_PASS);
 const app = express();
 app.use(cors());
 app.use(express.json());
-let currentStatus = "In-active";
 
 app.use(
   "/portfolio/api/v1/view",
@@ -89,7 +89,7 @@ const isValidUser = async (req, res, next) => {
       });
     }
   } catch (e) {
-    res.status(401).json({
+    res.status(500).json({
       success: false,
       status: "server error",
     });
@@ -98,9 +98,15 @@ const isValidUser = async (req, res, next) => {
 
 //all routes
 
-app.post("/portfolio/api/v1/status", isValidUser, (req, res) => {
+app.post("/portfolio/api/v1/status", isValidUser, async (req, res) => {
   const { status } = req.body;
-  currentStatus = status;
+
+  const portfolioStatus = await PORTFOLIO_STATUS.findOne({});
+  if (portfolioStatus) {
+    await PORTFOLIO_STATUS.findByIdAndUpdate(portfolioStatus._id, { status });
+  } else {
+    await PORTFOLIO_STATUS.create({ status });
+  }
 
   console.log("User status:", status);
 
@@ -113,10 +119,18 @@ app.post("/portfolio/api/v1/status", isValidUser, (req, res) => {
 });
 
 app.get("/portfolio/api/v1/status", async (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: currentStatus,
-  });
+  try {
+    const status = await PORTFOLIO_STATUS.findOne({});
+    res.status(200).json({
+      success: true,
+      status: status ? status.status : "In-active",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      status: "server error",
+    });
+  }
 });
 
 app.get("/portfolio/api/v1/feedback", isValidUser, async (req, res) => {
@@ -130,7 +144,7 @@ app.get("/portfolio/api/v1/feedback", isValidUser, async (req, res) => {
       feedback: latestFeedbackList,
     });
   } catch (e) {
-    res.status(401).json({
+    res.status(500).json({
       success: false,
       status: "server error",
     });
@@ -166,7 +180,7 @@ app.post("/portfolio/api/v1/feedback", async (req, res) => {
       message: "feedback submited",
     });
   } catch (e) {
-    res.status(401).json({
+    res.status(500).json({
       success: false,
       status: "server error",
     });
