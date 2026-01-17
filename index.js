@@ -3,18 +3,12 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const { FEEDBACK } = require("./modal/feedback.modal");
 
 require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.EMAIL_PASS);
 
 const app = express();
 app.use(cors());
@@ -28,51 +22,50 @@ app.use(
 
 async function sendEmail({ name, email, number, message }) {
   try {
-    const info = await transporter.sendMail({
-      from: `"Portfolio Feedback" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: "kumarshanu.dev@gmail.com",
-      subject: "New Feedback Received",
-      html: `
-          <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
-            <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden;">
-              
-              <div style="background:#0d6efd; color:#ffffff; padding:16px;">
-                <h2 style="margin:0;">📩 Feedback Form</h2>
+      subject: `Portfolio Feedback <${process.env.EMAIL_USER}>`,
+      html: `<div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
+                <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden;">
+                  
+                  <div style="background:#0d6efd; color:#ffffff; padding:16px;">
+                    <h2 style="margin:0;">📩 Feedback Form</h2>
+                  </div>
+      
+                  <div style="padding:20px; color:#333;">
+                    <p>You have received new feedback with the following details:</p>
+      
+                    <table style="width:100%; border-collapse:collapse;">
+                      <tr>
+                        <td style="padding:8px; font-weight:bold;">Name</td>
+                        <td style="padding:8px;">${name}</td>
+                      </tr>
+                      <tr style="background:#f8f9fa;">
+                        <td style="padding:8px; font-weight:bold;">Email</td>
+                        <td style="padding:8px;">${email}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px; font-weight:bold;">Phone</td>
+                        <td style="padding:8px;">${number}</td>
+                      </tr>
+                      <tr style="background:#f8f9fa;">
+                        <td style="padding:8px; font-weight:bold;">Message</td>
+                        <td style="padding:8px;">${message}</td>
+                      </tr>
+                    </table>
+      
+                    <p style="margin-top:20px; font-size:12px; color:#777;">
+                      This email was generated from your portfolio feedback form.
+                    </p>
+                  </div>
+      
+                </div>
               </div>
-  
-              <div style="padding:20px; color:#333;">
-                <p>You have received new feedback with the following details:</p>
-  
-                <table style="width:100%; border-collapse:collapse;">
-                  <tr>
-                    <td style="padding:8px; font-weight:bold;">Name</td>
-                    <td style="padding:8px;">${name}</td>
-                  </tr>
-                  <tr style="background:#f8f9fa;">
-                    <td style="padding:8px; font-weight:bold;">Email</td>
-                    <td style="padding:8px;">${email}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px; font-weight:bold;">Phone</td>
-                    <td style="padding:8px;">${number}</td>
-                  </tr>
-                  <tr style="background:#f8f9fa;">
-                    <td style="padding:8px; font-weight:bold;">Message</td>
-                    <td style="padding:8px;">${message}</td>
-                  </tr>
-                </table>
-  
-                <p style="margin-top:20px; font-size:12px; color:#777;">
-                  This email was generated from your portfolio feedback form.
-                </p>
-              </div>
-  
-            </div>
-          </div>
-        `,
+            `,
     });
 
-    console.log("Email sent:", info.messageId);
+    console.log("Email sent:");
   } catch (err) {
     console.error("Email error:", err);
   }
