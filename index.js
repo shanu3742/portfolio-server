@@ -102,13 +102,7 @@ app.post("/portfolio/api/v1/status", isValidUser, async (req, res) => {
   const { status } = req.body;
 
   const portfolioStatus = await PORTFOLIO_STATUS.findOne({});
-  if (portfolioStatus) {
-    await PORTFOLIO_STATUS.findByIdAndUpdate(portfolioStatus._id, { status });
-  } else {
-    await PORTFOLIO_STATUS.create({ status });
-  }
-
-  console.log("User status:", status);
+  await PORTFOLIO_STATUS.findByIdAndUpdate(portfolioStatus._id, { status });
 
   // TODO: save to DB / mark active / send email etc.
 
